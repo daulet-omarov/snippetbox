@@ -1,6 +1,9 @@
 package mocks
 
-import "snippetbox.dauletomarov.net/internal/models"
+import (
+	"snippetbox.dauletomarov.net/internal/models"
+	"time"
+)
 
 type UserModel struct{}
 
@@ -30,8 +33,26 @@ func (m *UserModel) Exists(id int) (bool, error) {
 	}
 }
 
-/*
-CREATE USER 'test_web'@'localhost';
-GRANT CREATE, DROP, ALTER, INDEX, SELECT, INSERT, UPDATE, DELETE ON test_snippetbox.* TO 'test_web'@'localhost';
-ALTER USER 'test_web'@'localhost' IDENTIFIED BY 'pass';
-*/
+func (m *UserModel) Get(id int) (*models.User, error) {
+	if id == 1 {
+		u := &models.User{
+			ID:      1,
+			Name:    "Alice",
+			Email:   "alice@example.com",
+			Created: time.Now(),
+		}
+		return u, nil
+	}
+	return nil, models.ErrNoRecord
+}
+
+func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) error {
+	if id == 1 {
+		if currentPassword !=
+			"pa$$word" {
+			return models.ErrInvalidCredentials
+		}
+		return nil
+	}
+	return models.ErrNoRecord
+}
