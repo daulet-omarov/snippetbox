@@ -35,10 +35,8 @@ jobs:
         run: docker build -t snippetbox .
       - name: Test Container
         run: |
-          docker run --rm -d -p 4000:4000 \
-            --env DB_DSN="user:pass@tcp(127.0.0.1:3306)/snippetbox?parseTime=true" \
-            snippetbox
-          sleep 10
+          docker run --rm -d -p 4000:4000 --env DB_DSN="user:pass@tcp(mysql:3306)/snippetbox?parseTime=true" --name snippetbox snippetbox
+          sleep 15
           curl -f http://localhost:4000
       - name: Docker Push
         run: echo "Push to registry here (e.g., Docker Hub, GHCR)"
