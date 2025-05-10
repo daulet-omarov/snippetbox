@@ -11,8 +11,8 @@ Make sure you have the following installed before proceeding:
 
 Start by cloning the repository to your local machine:
 
-git clone https://github.com/daulet-omarov/snippetbox
-cd snippetbox
+```git clone https://github.com/daulet-omarov/snippetbox
+cd snippetbox```
 
 ### Run the Application with Docker Compose
 
