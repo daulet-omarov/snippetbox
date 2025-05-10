@@ -21,6 +21,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	data.Snippets = snippets
 
 	app.render(w, http.StatusOK, "home.tmpl", data)
+	//fmt.Fprintln(w, "Welcome to the HomePage!")
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {

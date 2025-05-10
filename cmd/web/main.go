@@ -8,6 +8,9 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"html/template"
 	"log"
 	"net/http"
@@ -29,19 +32,37 @@ type application struct {
 
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
-	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
 	debug := flag.Bool("debug", false, "Debug mode")
+
+	dsnStr := os.Getenv("DB_DSN")
+	if dsnStr == "" {
+		dsnStr = "web:pass@/snippetbox?parseTime=true"
+	}
+	dsn := flag.String("dsn", dsnStr, "MySQL data source name")
 
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	db, err := openDB(*dsn)
+	var db *sql.DB
+	var err error
+	for i := 0; i < 10; i++ {
+		db, err = openDB(*dsn)
+		if err == nil {
+			break
+		}
+		errorLog.Printf("DB not ready yet (%d/10): %v", i+1, err)
+		time.Sleep(2 * time.Second)
+	}
 	if err != nil {
 		errorLog.Fatal(err)
 	}
 	defer db.Close()
+
+	if err = runMigrations(*dsn); err != nil {
+		log.Fatal(err)
+	}
 
 	templateCache, err := newTemplateCache()
 	if err != nil {
@@ -81,7 +102,7 @@ func main() {
 	}
 
 	infoLog.Printf("Starting on server %s", *addr)
-	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
+	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
 }
 
@@ -94,4 +115,34 @@ func openDB(dsn string) (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+func runMigrations(dsn string) error {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	driver, err := mysql.WithInstance(db, &mysql.Config{})
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(
+		"file:///app/migrations",
+		"mysql",
+		driver,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Apply migrations (up)
+	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		return err
+	}
+
+	return nil
 }
