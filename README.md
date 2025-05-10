@@ -11,16 +11,14 @@ Make sure you have the following installed before proceeding:
 
 Start by cloning the repository to your local machine:
 
-```bash
 git clone https://github.com/daulet-omarov/snippetbox
-cd snippetbox```
+cd snippetbox
 
 ### Run the Application with Docker Compose
 
 To build and run the application using Docker Compose, execute the following command:
 
-```bash
-docker-compose up --build```
+docker-compose up --build
 
 This will:
 
@@ -31,5 +29,4 @@ This will:
 
 To stop the running application, use:
 
-```bash
-docker-compose down```
+docker-compose down
